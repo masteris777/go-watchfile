@@ -1,4 +1,4 @@
-package watchFile
+package watchfile
 
 import (
 	 "time"
@@ -6,22 +6,22 @@ import (
 	 "fmt"
 )
 
-type OperationType int
+// type OperationType int
 
-const (
-	Create OperationType = iota
-	Remove
-	Modify
-)
-
-
-type FileChangeMessage struct {
-	File string
-	Error error || nil = nil
-}
+// const (
+// 	Create OperationType = iota
+// 	Remove
+// 	Modify
+// )
 
 
-func watchFile (file string, options ...time.Duration) chan bool{
+// type FileChangeMessage struct {
+// 	File string
+// 	Error error|int= nil
+// }
+
+
+func watchfile (file string, options ...time.Duration) chan bool{
 	var checkingInterval time.Duration = 1 * time.Second
 	if len(options) > 0 {
     	checkingInterval = options[0]
