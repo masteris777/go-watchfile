@@ -1,78 +1,48 @@
 package watchfile
 
 import (
-	 "time"
-	 "os"
-	 "fmt"
+	"os"
+	"time"
 )
 
-// type OperationType int
-
-// const (
-// 	Create OperationType = iota
-// 	Remove
-// 	Modify
-// )
-
-
-// type FileChangeMessage struct {
-// 	File string
-// 	Error error|int= nil
-// }
-
-
-func watchfile (file string, options ...time.Duration) chan bool{
+func Notify (file string, options ...time.Duration) (chan bool, chan error){
 	var checkingInterval time.Duration = 1 * time.Second
-	if len(options) > 0 {
-    	checkingInterval = options[0]
-  	}
+	if len(options) > 0 { checkingInterval = options[0] }
 
-	fileChangeNotification := make(chan bool)
-	
-	pulse := interval(checkingInterval)
+	fileChangeNotificationCh := make(chan bool)
+	fileReadingErrorNotificationCh := make(chan error)
 	
 	go func(){
+
 		var lastModTime int64 = 0
-		for{
-			<-pulse
+		fileCheckingError := false
+		
+		for {
+
+			time.Sleep(checkingInterval)
+
 			file, err := os.Stat(file)
-
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			modTime := file.ModTime().Unix()
 			
-			if (lastModTime !=0 && lastModTime < modTime){
-				fileChangeNotification <- true
+			if (err != nil) {
+
+				if (!fileCheckingError) { 
+					fileReadingErrorNotificationCh <- err
+				}
+
+			} else {
+
+				modTime := file.ModTime().Unix()
+				
+				if (lastModTime !=0 && lastModTime < modTime){
+					fileChangeNotificationCh <- true
+				}
+
+				lastModTime = modTime
 			}
 
-			lastModTime = modTime
+			fileCheckingError = (err != nil)
 
 		}
 	}()
-	return fileChangeNotification
+	return fileChangeNotificationCh, fileReadingErrorNotificationCh
 }
-
-type mainProc = func()
-func forever(fn mainProc) {
-	go func(){
-		for{
-			fn()
-		}
-	}()
-	done := make(chan bool)
-	<-done
-}
-
-func interval(period time.Duration) chan bool{
-	pulse := make(chan bool)
-	go forever( func(){
-		for{
-			time.Sleep(period)
-			pulse <- true
-		}
-	})
-	return pulse
-}
-
